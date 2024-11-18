@@ -1,75 +1,103 @@
 import streamlit as st
 
-# 设置页面标题
-st.title("NMOS SDP文件参数生成器")
+# SDP文件生成函数
+def generate_sdp(attributes):
+    sdp_content = f"v=0\n"
+    sdp_content += f"o={attributes['origin']}\n"
+    sdp_content += f"s={attributes['session_name']}\n"
+    sdp_content += f"i={attributes['session_info']}\n"
+    sdp_content += f"u={attributes['uri']}\n"
+    sdp_content += f"e={attributes['email']}\n"
+    sdp_content += f"p={attributes['phone']}\n"
+    sdp_content += f"c=IN IP4 {attributes['connection_address']}\n"
+    sdp_content += f"t=0 0\n"
+    sdp_content += f"a=tool:{attributes['tool']}\n"
+    sdp_content += f"a=recvonly\n"
+    
+    # 添加媒体描述
+    sdp_content += f"m={attributes['media_type']} {attributes['port']} {attributes['protocol']} {attributes['media_format']}\n"
+    sdp_content += f"a=sendrecv\n"
+    
+    # 添加带宽信息
+    sdp_content += f"b=AS:{attributes['bandwidth']}\n"
+    
+    # 添加时间戳
+    sdp_content += f"t={attributes['start_time']} {attributes['end_time']}\n"
+    
+    # 添加Dash-7属性
+    sdp_content += f"a=dash-7:{attributes['dash_7']}\n"
+    
+    # 添加媒体格式参数
+    sdp_content += f"a=fmtp:{attributes['media_format_type']} {attributes['resolution']} {attributes['frame_rate']} {attributes['bitrate']}\n"
+    
+    return sdp_content
 
-# 左侧参数设置
-st.sidebar.header("设置参数")
-version = st.sidebar.text_input("SDP版本", "v=0")
-origin = st.sidebar.text_input("会话发起者", "- 0 0 IN IP4 192.168.1.1")
-session_name = st.sidebar.text_input("会话名称", "NMOS SDP示例")
-time_description = st.sidebar.text_input("时间描述", "t=0 0")
+# Streamlit界面
+st.title("SDP 文件生成器")
 
-# 视频流参数
-st.sidebar.header("视频流参数")
-video_port = st.sidebar.number_input("视频端口", min_value=1024, max_value=65535, value=5000)
-video_ip = st.sidebar.text_input("视频IP地址", "192.168.1.1")
-video_encoding = st.sidebar.text_input("视频编码格式", "H264")
-video_rtp_map = st.sidebar.text_input("视频RTP映射", "96")
-video_attributes = st.sidebar.text_area("视频其他属性", "a=control:video")
+# 左侧属性输入
+st.sidebar.header("输入属性")
+origin = st.sidebar.text_input("Origin", "User 1 0 0 IN IP4 127.0.0.1")
+session_name = st.sidebar.text_input("Session Name", "SDP Session")
+session_info = st.sidebar.text_input("Session Info", "This is a sample SDP session")
+uri = st.sidebar.text_input("URI", "http://example.com")
+email = st.sidebar.text_input("Email", "user@example.com")
+phone = st.sidebar.text_input("Phone", "+123456789")
+connection_address = st.sidebar.text_input("Connection Address", "192.168.1.1")
+tool = st.sidebar.text_input("Tool", "SDP Generator")
 
-# 音频流参数
-st.sidebar.header("音频流参数")
-audio_port = st.sidebar.number_input("音频端口", min_value=1024, max_value=65535, value=5002)
-audio_ip = st.sidebar.text_input("音频IP地址", "192.168.1.1")
-audio_encoding = st.sidebar.text_input("音频编码格式", "AAC")
-audio_rtp_map = st.sidebar.text_input("音频RTP映射", "97")
-audio_attributes = st.sidebar.text_area("音频其他属性", "a=control:audio")
+# 新增媒体描述属性
+media_type = st.sidebar.text_input("Media Type", "video")
+port = st.sidebar.text_input("Port", "5004")
+protocol = st.sidebar.text_input("Protocol", "RTP/AVP")
 
-# 辅助数据流参数
-st.sidebar.header("辅助数据流参数")
-data_port = st.sidebar.number_input("辅助数据端口", min_value=1024, max_value=65535, value=5004)
-data_ip = st.sidebar.text_input("辅助数据IP地址", "192.168.1.1")
-data_encoding = st.sidebar.text_input("辅助数据编码格式", "application/octet-stream")
-data_rtp_map = st.sidebar.text_input("辅助数据RTP映射", "98")
-data_attributes = st.sidebar.text_area("辅助数据其他属性", "a=control:data")
+# 分解媒体格式属性
+media_format_type = st.sidebar.text_input("Media Format Type", "96")
+media_format_parameters = st.sidebar.text_input("Media Format Parameters", "parameter1=0,parameter2=1")
 
-# 生成SDP文件文本
-sdp_content = f"""
-{version}
-o={origin}
-s={session_name}
-{time_description}
-"""
+# 新增媒体格式参数
+resolution = st.sidebar.text_input("Resolution (e.g., 1920x1080)", "1920x1080")
+frame_rate = st.sidebar.text_input("Frame Rate (e.g., 30)", "30")
+bitrate = st.sidebar.text_input("Bitrate (kbps)", "500")
 
-# 视频流
-sdp_content += f"""
-m=video {video_port} RTP/AVP {video_rtp_map}
-c=IN IP4 {video_ip}
-a=rtpmap:{video_rtp_map} {video_encoding}/90000
-{video_attributes}
-"""
+# 新增带宽和时间戳属性
+bandwidth = st.sidebar.text_input("Bandwidth (kbps)", "500")
+start_time = st.sidebar.text_input("Start Time", "0")
+end_time = st.sidebar.text_input("End Time", "0")
 
-# 音频流
-sdp_content += f"""
-m=audio {audio_port} RTP/AVP {audio_rtp_map}
-c=IN IP4 {audio_ip}
-a=rtpmap:{audio_rtp_map} {audio_encoding}/48000
-{audio_attributes}
-"""
+# 新增Dash-7属性
+dash_7 = st.sidebar.text_input("Dash-7 Attribute", "default_value")
 
-# 辅助数据流
-sdp_content += f"""
-m=application {data_port} RTP/AVP {data_rtp_map}
-c=IN IP4 {data_ip}
-a=rtpmap:{data_rtp_map} {data_encoding}/90000
-{data_attributes}
-"""
+# 生成SDP内容
+attributes = {
+    "origin": origin,
+    "session_name": session_name,
+    "session_info": session_info,
+    "uri": uri,
+    "email": email,
+    "phone": phone,
+    "connection_address": connection_address,
+    "tool": tool,
+    "media_type": media_type,
+    "port": port,
+    "protocol": protocol,
+    "media_format": f"{media_format_type} {media_format_parameters}",
+    "bandwidth": bandwidth,
+    "start_time": start_time,
+    "end_time": end_time,
+    "dash_7": dash_7,
+    "media_format_type": media_format_type,
+    "resolution": resolution,
+    "frame_rate": frame_rate,
+    "bitrate": bitrate,
+}
 
-# 右侧显示生成的SDP文件文本
-st.header("生成的SDP文件文本")
-st.text_area("SDP文件", sdp_content, height=400)
+sdp_output = generate_sdp(attributes)
 
-# 运行应用
+# 右侧显示生成的SDP文本
+st.header("生成的SDP文件")
+st.text_area("SDP内容", value=sdp_output, height=300)
+
+# 运行Streamlit应用
 if __name__ == "__main__":
-    st.run()
+    st.run() 
